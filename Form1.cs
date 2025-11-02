@@ -98,6 +98,7 @@ namespace BlogForm
                 // Process the blog content by spliting the entry's data up for JSON serialization
 
                 var splitContent = blogContent.Split(new[] { "$section" }, StringSplitOptions.RemoveEmptyEntries);
+                Console.WriteLine(splitContent);
                 var jsonEntries = new List<Dictionary<string, object>>();
 
                 // Handle convert these JSON strings into actual JSON we want to use in the post.
@@ -136,15 +137,21 @@ namespace BlogForm
                 string json = JsonConvert.SerializeObject(jsonEntries, Formatting.Indented);
 
                 // Helper function to extract values
-                string ExtractValue(string input, string key)
+                string ExtractValue(string section, string marker)
                 {
-                    var match = Regex.Match(input, $@"{Regex.Escape(key)}\s+(.*?)(?=\s+\$|$)");
-                    return match.Success ? match.Groups[1].Value.Trim() : "";
-                };
+                    int index = section.IndexOf(marker);
+                    if (index == -1) return "";
 
-      
-            // This is the current existing data in the blog file:
-            string currentBlog = File.ReadAllText(this.blogPath);
+                    // Move past the marker itself
+                    index += marker.Length;
+
+                    // Trim and return the rest of the string
+                    return section.Substring(index).Trim();
+                }
+
+
+                // This is the current existing data in the blog file:
+                string currentBlog = File.ReadAllText(this.blogPath);
                 int start = currentBlog.IndexOf("[");
                 int end = currentBlog.LastIndexOf("]");
 
@@ -191,7 +198,7 @@ namespace BlogForm
 
                 // Push changes
 
-                RunGitCommand($"git add {image_name} blog.js");
+                RunGitCommand($"git add *.jpg *.js");
                 RunGitCommand("git commit -m \"Add blog assets\"");
                 RunGitCommand("git push");
 
